@@ -1,1 +1,2 @@
-# EODP_test_Pedro_Gigoux
+# eodp
+EODP main repository
