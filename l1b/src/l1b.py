@@ -62,9 +62,9 @@ class l1b(initL1b):
         :param eq_mult: Gain factor, adimensional
         :return: TOA in DN, equalized
         """
-        toa_l = (toa - eq_add) / eq_mult
+        toa_f = (toa - eq_add) / eq_mult
         #TODO
-        return toa_l
+        return toa_f
 
     def restoration(self,toa,gain):
         """
