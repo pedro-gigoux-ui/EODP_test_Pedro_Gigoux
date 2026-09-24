@@ -146,6 +146,7 @@ class mtf:
         :return: WFE Aberrations MTF
         """
         #TODO
+        Hwfe = np.exp(-fr2D * (1 - fr2D) * (kLF * (wLF / lambd) ** 2 + kHF * (wHF / lambd) ** 2))
         return Hwfe
 
     def mtfDetector(self,fn2D):
@@ -155,6 +156,7 @@ class mtf:
         :return: detector MTF
         """
         #TODO
+        Hdet =  np.abs(np.sinc(fn2D))
         return Hdet
 
     def mtfSmearing(self, fnAlt, ncolumns, ksmear):
@@ -166,6 +168,7 @@ class mtf:
         :return: Smearing MTF
         """
         #TODO
+        #Hsmear = np.sinc(fnAlt * ksmear)
         return Hsmear
 
     def mtfMotion(self, fn2D, kmotion):
@@ -176,6 +179,7 @@ class mtf:
         :return: detector MTF
         """
         #TODO
+        Hmotion= np.sinc(kmotion * fn2D)
         return Hmotion
 
     def plotMtf(self,Hdiff, Hdefoc, Hwfe, Hdet, Hsmear, Hmotion, Hsys, nlines, ncolumns, fnAct, fnAlt, directory, band):
@@ -196,6 +200,7 @@ class mtf:
         :param band: band
         :return: N/A
         """
+
         #TODO
 
 
