@@ -92,6 +92,20 @@ class mtf:
         :return fnAlt: 1D normalised frequencies 2D ALT (f/(1/w))
         """
         #TODO
+        fstepAlt = 1 / nlines / w
+        fstepAct = 1 / ncolumns / w
+        eps = 1e-6
+        fAlt = np.arange(-1 / (2 * w), 1 / (2 * w) - eps, fstepAlt)
+        fAct = np.arange(-1 / (2 * w), 1 / (2 * w) - eps, fstepAct)
+        [fAltxx, fActxx] = np.meshgrid(fAlt, fAct,
+                                       indexing='ij')  # Please use ‘ij’ indexing or you will get the transpose
+        f2D = np.sqrt(fAltxx * fAltxx + fActxx * fActxx)
+        fn2D = f2D*w
+        fr2D = (f2D*D)/(focal*lambd)
+        fnAct = fAct*w
+        fnAlt = fAlt*w
+
+
         return fn2D, fr2D, fnAct, fnAlt
 
     def mtfDiffract(self,fr2D):
@@ -101,6 +115,8 @@ class mtf:
         :return: diffraction MTF
         """
         #TODO
+        Hdiff = (2/np.pi)*(np.arccos(fr2D) - fr2D * (1-fr2D**2)**0.5)
+
         return Hdiff
 
 
@@ -114,6 +130,8 @@ class mtf:
         :return: Defocus MTF
         """
         #TODO
+        x = np.pi*defocus*fr2D*(1 - fr2D)
+        Hdefoc = 2*j1(x)/x
         return Hdefoc
 
     def mtfWfeAberrations(self, fr2D, lambd, kLF, wLF, kHF, wHF):
