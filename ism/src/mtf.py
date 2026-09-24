@@ -168,7 +168,9 @@ class mtf:
         :return: Smearing MTF
         """
         #TODO
-        #Hsmear = np.sinc(fnAlt * ksmear)
+        Hsmear = np.zeros((np.size(fnAlt), ncolumns))
+        for n in range(ncolumns):
+            Hsmear[:, n] = np.sinc(fnAlt * ksmear)
         return Hsmear
 
     def mtfMotion(self, fn2D, kmotion):
