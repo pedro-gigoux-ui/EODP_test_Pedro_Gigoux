@@ -1,9 +1,12 @@
+import scipy
+from scipy.constants import sigma
 
 from ism.src.initIsm import initIsm
 import numpy as np
 from common.io.writeToa import writeToa
 from common.plot.plotMat2D import plotMat2D
 from common.plot.plotF import plotF
+import scipy.constants as spy
 
 class detectionPhase(initIsm):
 
@@ -105,6 +108,10 @@ class detectionPhase(initIsm):
         :return: Toa in photons
         """
         #TODO
+        E_in = area_pix * tint * toa * 0.001
+        E_phot = (spy.Planck * spy.c)/wv
+        toa_ph = E_in/E_phot
+
         return toa_ph
 
     def phot2Electr(self, toa, QE):
@@ -115,6 +122,15 @@ class detectionPhase(initIsm):
         :return: toa in electrons
         """
         #TODO
+
+
+        toae = toa * QE
+        toae[toae>self.ismConfig.FWC] = self.ismConfig.FWC
+        for i in range(toae.shape[0]):
+            for j in range(toae.shape[1]):
+                if toae[i][j]>self.ismConfig.FWC:
+                    toae[i][j] = self.ismConfig.FWC
+
         return toae
 
     def badDeadPixels(self, toa,bad_pix,dead_pix,bad_pix_red,dead_pix_red):
@@ -138,6 +154,9 @@ class detectionPhase(initIsm):
         :return: TOA after adding PRNU [e-]
         """
         #TODO
+        PRNU = np.random.standard_normal(toa.shape[0]) * kprnu
+        for x in range(toa.shape[0]):
+            toa[:,x] = toa[:,x] * (1+PRNU)
         return toa
 
 
@@ -153,4 +172,13 @@ class detectionPhase(initIsm):
         :return: TOA in [e-] with dark signal
         """
         #TODO
+        Sd = ds_A_coeff * ((T / Tref) ** 3) * np.exp(-ds_B_coeff * ((1.0 / T) - (1.0 / Tref)))
+
+        dsnu_vec = np.random.standard_normal(toa.shape[1]) * kdsnu
+        ds = np.zeros(toa.shape[0])
+        for x in range(toa.shape[0]):
+            ds[x] = Sd * (1.0 + dsnu_vec[x])
+
+            toa[:,x] = toa[:,x] + ds[x]
+
         return toa

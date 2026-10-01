@@ -101,7 +101,7 @@ class mtf:
                                        indexing='ij')  # Please use ‘ij’ indexing or you will get the transpose
         f2D = np.sqrt(fAltxx * fAltxx + fActxx * fActxx)
         fn2D = f2D*w
-        fr2D = (f2D*D)/(focal*lambd)
+        fr2D = (f2D*focal*lambd)/(D)
         fnAct = fAct*w
         fnAlt = fAlt*w
 
@@ -115,7 +115,10 @@ class mtf:
         :return: diffraction MTF
         """
         #TODO
-        Hdiff = (2/np.pi)*(np.arccos(fr2D) - fr2D * (1-fr2D**2)**0.5)
+
+
+        Hdiff = (2 / np.pi) * (np.arccos(fr2D) - (fr2D * np.sqrt(1 - fr2D ** 2)))
+
 
         return Hdiff
 
@@ -146,7 +149,14 @@ class mtf:
         :return: WFE Aberrations MTF
         """
         #TODO
-        Hwfe = np.exp(-fr2D * (1 - fr2D) * (kLF * (wLF / lambd) ** 2 + kHF * (wHF / lambd) ** 2))
+        # 1. Acotamos fr2D a [0, 1] para evitar exponenciales positivas gigantes
+        #fr2D_clipped = np.clip(fr2D, 0.0, 1.0)
+
+        # 2. Calculamos Hwfe
+        exponent = -fr2D * (1.0 - fr2D) * (kLF * (wLF / lambd) ** 2 + kHF * (wHF / lambd) ** 2)
+        Hwfe = np.exp(exponent)
+
+
         return Hwfe
 
     def mtfDetector(self,fn2D):
@@ -204,5 +214,4 @@ class mtf:
         """
 
         #TODO
-
 
