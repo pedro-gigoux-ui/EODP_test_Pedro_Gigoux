@@ -123,13 +123,9 @@ class detectionPhase(initIsm):
         """
         #TODO
 
-
         toae = toa * QE
-        toae[toae>self.ismConfig.FWC] = self.ismConfig.FWC
-        for i in range(toae.shape[0]):
-            for j in range(toae.shape[1]):
-                if toae[i][j]>self.ismConfig.FWC:
-                    toae[i][j] = self.ismConfig.FWC
+
+        toae = np.minimum(toae, self.ismConfig.FWC)
 
         return toae
 
@@ -154,9 +150,9 @@ class detectionPhase(initIsm):
         :return: TOA after adding PRNU [e-]
         """
         #TODO
-        PRNU = np.random.standard_normal(toa.shape[0]) * kprnu
-        for x in range(toa.shape[0]):
-            toa[:,x] = toa[:,x] * (1+PRNU)
+        PRNU = np.random.standard_normal(toa.shape[1]) * kprnu
+        for x in range(toa.shape[1]):
+            toa[:,x] = toa[:,x] * (1+PRNU[x])
         return toa
 
 
@@ -172,13 +168,14 @@ class detectionPhase(initIsm):
         :return: TOA in [e-] with dark signal
         """
         #TODO
+
         Sd = ds_A_coeff * ((T / Tref) ** 3) * np.exp(-ds_B_coeff * ((1.0 / T) - (1.0 / Tref)))
 
-        dsnu_vec = np.random.standard_normal(toa.shape[1]) * kdsnu
-        ds = np.zeros(toa.shape[0])
-        for x in range(toa.shape[0]):
-            ds[x] = Sd * (1.0 + dsnu_vec[x])
+        n_act = toa.shape[1]
+        dsnu_vec = np.abs(np.random.standard_normal(n_act)) * kdsnu
 
-            toa[:,x] = toa[:,x] + ds[x]
+        DS = Sd * (1.0 + dsnu_vec)
+
+        toa[:, :] = toa + DS
 
         return toa
