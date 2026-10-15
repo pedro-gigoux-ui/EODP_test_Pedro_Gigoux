@@ -1,6 +1,4 @@
 # CROSS VALIDATE L1B OUTPUTS EQUALIZED
-from bdb import Breakpoint
-
 # PLOT FROM YOUR OUTPUTS THE EQUALISED OUTPUT VERSUS NOT EQUALISED VERSUS THE TRUTH
 # TRUTH = EODP-TS-L1B\input\ism_toa_isrf_VNIR-0.nc
 
@@ -29,6 +27,8 @@ toa_expected = []
 for band in bands:
     toa_expected.append(readToa(out_expected, "l1b_toa_" + band + '.nc'))
 
+
+#Plot code
 for i, band in enumerate(bands):
 
     plt.figure(figsize=(12, 6))
@@ -47,6 +47,8 @@ for i, band in enumerate(bands):
     plt.tight_layout()
     plt.show()
 
+
+#Cross Validation code
 x=0
 for i, band in enumerate(bands):
     for j in range(len(toa_expected[i])):

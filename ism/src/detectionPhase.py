@@ -140,6 +140,7 @@ class detectionPhase(initIsm):
         :return: toa in e- including bad & dead pixels
         """
         #TODO
+        toa[:,5] = toa[:,5]*(1-bad_pix_red)
         return toa
 
     def prnu(self, toa, kprnu):
@@ -176,6 +177,6 @@ class detectionPhase(initIsm):
 
         DS = Sd * (1.0 + dsnu_vec)
 
-        toa[:, :] = toa + DS
+        toa[:,:] = toa + DS
 
         return toa
