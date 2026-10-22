@@ -76,6 +76,9 @@ class videoChainPhase(initIsm):
 
         toa_dn = np.round((toa / (max_voltage - min_voltage)) * max_dn)
 
+        # 2. Saturación: valores por encima de 2^bit_depth-1 se saturan y los negativos se ponen a 0
+        toa_dn = np.clip(toa_dn, 0, max_dn)
+
 
         return toa_dn
 
