@@ -5,8 +5,10 @@ from l1b.src.l1b import l1b
 
 # Directory - this is the common directory for the execution of the E2E, all modules
 auxdir = r'C:/Users/pedro/Documents/EODP/EODP_test_Pedro_Gigoux/auxiliary'
-indir = r"C:/Users/pedro/Documents/EODP/EODP_TER_2021/EODP-TS-L1B/input"
-outdir = r"C:/Users/pedro/Documents/EODP/EODP_TER_2021/EODP-TS-L1B/myout"
+#indir = r"C:/Users/pedro/Documents/EODP/EODP_TER_2021/EODP-TS-L1B/input"
+indir = r"C:/Users/pedro/Documents/EODP/EODP-TS-E2E/myout_ism"
+#outdir = r"C:/Users/pedro/Documents/EODP/EODP_TER_2021/EODP-TS-L1B/myout"
+outdir = r"C:/Users/pedro/Documents/EODP/EODP-TS-E2E/myout_l1b"
 
 # Initialise the ISM
 myL1b = l1b(auxdir, indir, outdir)

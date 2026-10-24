@@ -83,8 +83,25 @@ plt.savefig(os.path.join(fig_dir, "l1b_l1c_grids.png"))
 plt.show()
 
 # GSD ACT along the central row and GSD ALT along the central column
-gsd_act = ground_distance(lat_l1b[row, :-1], lon_l1b[row, :-1], lat_l1b[row, 1:], lon_l1b[row, 1:])
-gsd_alt = ground_distance(lat_l1b[:-1, col], lon_l1b[:-1, col], lat_l1b[1:, col], lon_l1b[1:, col])
+# gsd_act = ground_distance(lat_l1b[row, :-1], lon_l1b[row, :-1], lat_l1b[row, 1:], lon_l1b[row, 1:])
+# gsd_alt = ground_distance(lat_l1b[:-1, col], lon_l1b[:-1, col], lat_l1b[1:, col], lon_l1b[1:, col])
+
+nact=lat_l1b.shape[1] - 1
+gsd_act = np.zeros(nact)
+ialt = lat_l1b.shape[0] // 2
+for ii in range(nact):
+    gsd_act[ii] = ground_distance(lat_l1b[ialt,ii], lon_l1b[ialt,ii], lat_l1b[ialt,ii+1], lon_l1b[ialt,ii+1])
+
+
+nalt = lat_l1b.shape[0] - 1
+gsd_alt = np.zeros(nalt)
+iact = lat_l1b.shape[1] // 2
+for ii in range(nalt):
+    gsd_alt[ii] = ground_distance(lat_l1b[ii,iact], lon_l1b[ii,iact], lat_l1b[ii+1,iact], lon_l1b[ii+1,iact])
+
+
+
+
 mgrs_size = l1cConfig().mgrs_tile_size
 
 for name, gsd, xlabel in [("GSD ACT", gsd_act, "Act_Columns"), ("GSD ALT", gsd_alt, "Alt_Lines")]:
@@ -92,11 +109,13 @@ for name, gsd, xlabel in [("GSD ACT", gsd_act, "Act_Columns"), ("GSD ALT", gsd_a
     plt.figure(figsize=(12, 6))
 
     plt.plot(gsd, label=name + " (L1B)")
-    plt.axhline(mgrs_size, color='r', linestyle='--', label="L1C MGRS grid (" + str(mgrs_size) + " m)")
+    #plt.axhline(mgrs_size, color='r', linestyle='--', label="L1C MGRS grid (" + str(mgrs_size) + " m)")
 
     plt.title(name)
     plt.xlabel(xlabel)
     plt.ylabel("GSD [m]")
+    # Show the full GSD value on the axis (no "+4.51e1" offset on top)
+    plt.gca().yaxis.set_major_formatter(plt.FormatStrFormatter('%.5f'))
     plt.grid(True)
     plt.legend()
 
