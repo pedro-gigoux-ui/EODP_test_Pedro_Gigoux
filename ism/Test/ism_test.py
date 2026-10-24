@@ -10,6 +10,8 @@ from ism.src.mtf import mtf
 import numpy as np
 import os
 import logging
+import io
+import contextlib
 import matplotlib.pyplot as plt
 
 bands = ["VNIR-0", "VNIR-1", "VNIR-2", "VNIR-3"]
@@ -35,6 +37,12 @@ def relative_difference(mine, expected):
     return np.where(scale > 0, difference / np.where(scale > 0, scale, 1), difference)
 
 
+def quiet(read_function, directory, file):
+    # Reads the file without printing the "Reading ..." / "Size of matrix ..." messages
+    with contextlib.redirect_stdout(io.StringIO()):
+        return read_function(directory, file)
+
+
 # TOA files to compare: every ism_toa_*.nc present in both output folders
 files_expected = [f for f in os.listdir(out_expected) if f.startswith("ism_toa_") and f.endswith(".nc")]
 files_mine = [f for f in os.listdir(out_mine) if f.endswith(".nc")]
@@ -46,8 +54,8 @@ for file in files_expected:
     if file not in files_mine:
         print("Missing in myout: " + file)
         continue
-    toa_mine[file] = readToa(out_mine, file)
-    toa_expected[file] = readToa(out_expected, file)
+    toa_mine[file] = quiet(readToa, out_mine, file)
+    toa_expected[file] = quiet(readToa, out_expected, file)
 
 # MTFs: recomputed with my mtf class (they are not saved in myout) and compared with the H*.nc of the output
 config = ismConfig()
@@ -71,13 +79,13 @@ for band in bands:
         file = name + "_" + band + ".nc"
         H_mine[file] = H[name]
         if os.path.isfile(os.path.join(out_expected, file)):
-            H_expected[file] = readMat(out_expected, file)
+            H_expected[file] = quiet(readMat, out_expected, file)
 
 
 #Plot code
 # MTF cuts ACT/ALT in the central position. The MTF is symmetric, so only [0, Nyquist] is plotted:
 # the negative half of the frequencies is used because it includes -0.5 (the +0.5 is not sampled)
-print("\nMTF at the Nyquist frequency (fn = 0.5)")
+print("Defining MTF (lowest MTF at Nyquist)")
 for i, band in enumerate(bands):
     ialt0 = np.argmin(np.abs(fn_alt[band]))
     iact0 = np.argmin(np.abs(fn_act[band]))
@@ -107,11 +115,9 @@ for i, band in enumerate(bands):
     # Defining MTF: the contributor (not Hsys) with the lowest value at Nyquist
     nyq_act = {name: H_mine[name + "_" + band + ".nc"][ialt0, 0] for name in mtf_names}
     nyq_alt = {name: H_mine[name + "_" + band + ".nc"][0, iact0] for name in mtf_names}
-    print(band + ": " + ", ".join(name + " ACT=" + format(nyq_act[name], ".4f") + " ALT=" + format(nyq_alt[name], ".4f")
-                                  for name in mtf_names))
     defining_act = min(mtf_names[:-1], key=lambda name: nyq_act[name])
     defining_alt = min(mtf_names[:-1], key=lambda name: nyq_alt[name])
-    print(band + ": defining MTF -> ACT: " + defining_act + ", ALT: " + defining_alt)
+    print(band + ": ACT -> " + defining_act + ", ALT -> " + defining_alt)
 
 # Final ISM TOA, central ALT line: mine versus expected
 for i, band in enumerate(bands):
@@ -137,22 +143,21 @@ for i, band in enumerate(bands):
 
 
 #Cross Validation code
-print("\nCross validation (tolerance " + format(tolerance * 100, ".0e") + " %)")
+print("\nCross validation")
 x = 0
 for file, mine, expected in [(f, toa_mine[f], toa_expected[f]) for f in toa_mine] + \
                             [(f, H_mine[f], H_expected[f]) for f in H_expected]:
     if mine.shape != expected.shape:
-        print(file + ": different size " + str(mine.shape) + " vs " + str(expected.shape) + " -> Not Equal")
+        print(file + ": Not Equal (different size)")
         x = 1
         continue
     rel_diff = relative_difference(mine, expected)
     n_fail = np.sum(rel_diff > tolerance)
     if n_fail > 0:
         x = 1
-    print(file + ": max rel diff = " + format(np.max(rel_diff) * 100, ".3e") + " %, pixels out of tolerance = "
-          + str(n_fail) + "/" + str(rel_diff.size) + " -> " + ("Not Equal" if n_fail > 0 else "Equal"))
+    print(file + ": " + ("Not Equal" if n_fail > 0 else "Equal"))
 
 if x == 1:
-    print("Not Equal")
+    print("\nRESULT: Not Equal")
 else:
-    print("Equal")
+    print("\nRESULT: Equal")

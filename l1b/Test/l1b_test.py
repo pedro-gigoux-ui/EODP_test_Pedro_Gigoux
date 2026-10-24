@@ -51,6 +51,7 @@ for i, band in enumerate(bands):
 #Cross Validation code
 x=0
 for i, band in enumerate(bands):
+    y = 0
     for j in range(len(toa_expected[i])):
         for k in range(len(toa_expected[i][j])):
             difference = toa_eq[i][j][k] - toa_expected[i][j][k]
@@ -60,12 +61,16 @@ for i, band in enumerate(bands):
                 difference = -difference
             if (difference > 0.00001 * toa_expected[i][j][k]):
                 x = 1
-            if x == 1:
+                y = 1
+            if y == 1:
                 break
-        if x == 1:
+        if y == 1:
+
             break
-    if x == 1:
-        break
+    if y == 1:
+        print(f"{band} Not Equal")
+    else:
+        print(f"{band} Equal")
 if x == 1:
     print("Not Equal")
 else:

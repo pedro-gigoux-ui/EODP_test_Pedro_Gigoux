@@ -11,6 +11,8 @@ from common.io.readGeodetic import readGeodetic
 from config.l1cConfig import l1cConfig
 import numpy as np
 import os
+import io
+import contextlib
 import matplotlib.pyplot as plt
 
 bands = ["VNIR-0", "VNIR-1", "VNIR-2", "VNIR-3"]
@@ -38,6 +40,12 @@ def ground_distance(lat1, lon1, lat2, lon2):
     return 2 * R * np.arcsin(np.sqrt(a))
 
 
+def quiet(read_function, directory, file):
+    # Reads the file without printing the "Reading ..." / "Size of matrix ..." messages
+    with contextlib.redirect_stdout(io.StringIO()):
+        return read_function(directory, file)
+
+
 # L1C files to compare: every l1c_toa_*.nc present in both output folders
 files_expected = sorted(f for f in os.listdir(out_expected) if f.startswith("l1c_toa_") and f.endswith(".nc"))
 files_mine = [f for f in os.listdir(out_mine) if f.endswith(".nc")]
@@ -52,11 +60,11 @@ for file in files_expected:
     if file not in files_mine:
         print("Missing in myout: " + file)
         continue
-    toa_mine[file], lat_mine[file], lon_mine[file] = readL1c(out_mine, file)
-    toa_expected[file], lat_expected[file], lon_expected[file] = readL1c(out_expected, file)
+    toa_mine[file], lat_mine[file], lon_mine[file] = quiet(readL1c, out_mine, file)
+    toa_expected[file], lat_expected[file], lon_expected[file] = quiet(readL1c, out_expected, file)
 
 # L1B geometry (GM output)
-lat_l1b, lon_l1b = readGeodetic(gm_dir, "geolocation.nc")
+lat_l1b, lon_l1b = quiet(readGeodetic, gm_dir, "geolocation.nc")
 
 
 #Plot code
@@ -129,25 +137,26 @@ for name, gsd, xlabel in [("GSD ACT", gsd_act, "Act_Columns"), ("GSD ALT", gsd_a
 
 #Cross Validation code
 # The L1C points are not ordered (python set), so they are sorted by (lat, lon) before comparing
+print("\nCross validation")
 x = 0
 for file in toa_mine:
     order_mine = np.lexsort((lon_mine[file], lat_mine[file]))
     order_expected = np.lexsort((lon_expected[file], lat_expected[file]))
-    for var, mine, expected in [("toa", toa_mine[file], toa_expected[file]),
-                                ("lat", lat_mine[file], lat_expected[file]),
-                                ("lon", lon_mine[file], lon_expected[file])]:
+    equal = True
+    for mine, expected in [(toa_mine[file], toa_expected[file]),
+                           (lat_mine[file], lat_expected[file]),
+                           (lon_mine[file], lon_expected[file])]:
         if mine.shape != expected.shape:
-            print(file + " [" + var + "]: different size " + str(mine.shape) + " vs " + str(expected.shape) + " -> Not Equal")
-            x = 1
+            equal = False
             continue
         rel_diff = relative_difference(mine[order_mine], expected[order_expected])
-        n_fail = np.sum(rel_diff > tolerance)
-        if n_fail > 0:
-            x = 1
-        print(file + " [" + var + "]: max rel diff = " + format(np.max(rel_diff) * 100, ".3e") + " %, points out of tolerance = "
-              + str(n_fail) + "/" + str(rel_diff.size) + " -> " + ("Not Equal" if n_fail > 0 else "Equal"))
+        if np.sum(rel_diff > tolerance) > 0:
+            equal = False
+    if not equal:
+        x = 1
+    print(file + ": " + ("Equal" if equal else "Not Equal"))
 
 if x == 1:
-    print("Not Equal")
+    print("\nRESULT: Not Equal")
 else:
-    print("Equal")
+    print("\nRESULT: Equal")
